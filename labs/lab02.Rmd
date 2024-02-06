@@ -1,10 +1,10 @@
 ---
 title: "Lab 2"
-#author: "Insert Name"
+#author: "Morgen Kaufman"
 date: "Math 241, Week 2"
 output:
   pdf_document
-urlcolor: blue
+urlcolor: pink
 ---
 
 ```{r setup, include=FALSE}
@@ -50,6 +50,14 @@ library(viridis)
 ### Probem 1: Road traffic injuries in Edinburgh, Scotland 
 
 The dataset can be found in the `dsbox` package, and is called `accidents`. It covers all recorded accidents in Edinburgh in 2018; compared to the dataset made available by the UK government, some of the variables were modified for the purposes of the package. You can find out more about the dataset by inspecting its documentation with `?accidents`. Recreate the following plot, and interpret the results.
+
+```{r}
+data("accidents")
+
+accidentsalt <- accidents %/% select(day_of_week)
+
+ggplot(x="time", y="number")
+```
 
 
 ```{r, out.width="100%", echo=FALSE}
