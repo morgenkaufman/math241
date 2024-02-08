@@ -54,11 +54,35 @@ The dataset can be found in the `dsbox` package, and is called `accidents`. It c
 ```{r}
 data("accidents")
 
-accidentsalt <- accidents %/% select(day_of_week)
+accidentsalt <- accidents %>% 
+  mutate(weekday = case_when(
+    day_of_week %in% c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday') ~ 'weekday',
+    day_of_week %in% c('Saturday', 'Sunday') ~ 'weekend'
+  ))
 
-ggplot(x="time", y="number")
+
+custom_fill_colors <- c("Fatal" = "#bc77cb", "Serious" = "#72f6ef", "Slight" = "#fef3a5") 
+
+accidentsalt %>%
+  ggplot(aes(x = time)) +
+  geom_density(aes(fill = factor(severity)), alpha = 0.5) +
+  facet_wrap(~weekday, labeller = labeller(weekday = c(weekday = "Weekday", weekend = "Weekend")), scales = "free_y", ncol = 1) +
+  scale_y_continuous(breaks = c(0e-00, 1e-05, 2e-05), labels = c("0e-00", "1e-05", "2e-05")) +
+  theme_minimal() +
+  scale_fill_manual(values = custom_fill_colors) +
+  theme(
+    strip.text = element_text(hjust = 0.5),
+    strip.background = element_blank(),
+    strip.placement = "outside") +
+  labs(
+    title = "Number of accidents throughout the day",
+    subtitle = "By day of week and severity",
+    x = "Time of day",
+    y = "Density",
+    fill = "Severity"
+  )
 ```
-
+for this problem I wasnt able to get the exact colors so I went with similar colors but made them fit my personal style a bit more
 
 ```{r, out.width="100%", echo=FALSE}
 knitr::include_graphics("../img/edi-accidents-1.png")
@@ -69,7 +93,9 @@ knitr::include_graphics("../img/edi-accidents-1.png")
 
 Inspired by Nathan Yau's [One Dataset, Visualized 25 Ways](https://flowingdata.com/2017/01/24/one-dataset-visualized-25-ways/), I want you to create 5 visualizations of the same data. You can use the `mpg` dataset or another dataset of your choosing, including the `accidents` dataset above. Make sure you have the data manual open for this problem!  
 
+
 a. Pick 3 - 4 variables you want to explore.  Provide their code names here.
+Using accidents data set: vehicles, casualties, severity
 
 b. Create 5 graphs.  A few things to consider:
     + Like Nathan's graphs, they don't all have to contain every one of your selected variables.
@@ -77,19 +103,92 @@ b. Create 5 graphs.  A few things to consider:
     + Think carefully about color, the coordinate system, and scales.
     + Feel free to subset or wrangling the dataset if you want to but it isn't required.
 
+```{r, eval = T}
+
+data("accidents")
+
+accident2 <- accidents
+  
+ggplot(data=accident2, aes(x=vehicles, y=casualties, color=severity))+
+geom_point(size=4) +
+   labs(
+    title = "Number of vehicles in an accidents in relation to number of casualties",
+    subtitle = "By severity classification",
+    x = "Number of Vehicles",
+    y = "Number of Casualties",
+    color = "Severity"
+  )
+
+ggplot(data=accident2, aes(x=vehicles, y=casualties))+
+geom_point(size=4)+
+facet_wrap(~severity) +
+   labs(
+    title = "Number of vehicles in an accidents in relation to number of casualties",
+    subtitle = "By severity classification",
+    x = "Number of Vehicles",
+    y = "Number of Casualties")
+
+ggplot(data=accident2, aes(x=vehicles, fill=severity))+
+  geom_histogram(binwidth = 1)+
+  facet_wrap(~severity) +
+  labs(
+  title = "Number of vehicles involved in an accident",
+    subtitle = "By severity classification",
+    x = "Number of Vehicles",
+    y = "Frequency",
+    color = "Severity")
+
+ggplot(data=accident2, aes(x=vehicles, fill=severity))+
+  geom_density(alpha=0.5) +
+   labs(
+  title = "Density distribution of number of vehicles involved in an accident",
+    subtitle = "By severity classification",
+    x = "Number of Vehicles",
+    y = "Density",
+    color = "Severity")
+
+ggplot(data=accident2, aes(x=vehicles, y=severity, color=severity))+
+geom_boxplot() +
+  labs(
+  title = "Boxplot distribution of number of vehicles involved in an accident",
+    subtitle = "By severity classification",
+    x = "Number of Vehicles",
+    y = "Severity",
+    color = "Severity")
+```
+
+
+
+
 c. Discuss the pros/cons of your graphs.  What useful information can be gleaned?  How do the different geoms and aesthetics impact the story?
 
+1. 
+2.
+3.
+4.
+5. 
 
 ### Problem 3: Style This Code!
 
 Take the following code and don't change its functionality but DO change its style.  Use the [Tidyverse Style Guide](https://style.tidyverse.org/)!
 
 ```{r}
-thing.132232=data.frame(theanimalsweightisthisnumber=c(runif(3),NA),y=c("cat","mouse","dog","rat"))
-median(thing.132232$theanimalsweightisthisnumber, TRUE);mean(thing.132232$theanimalsweightisthisnumber, 0 , TRUE); var(thing.132232$theanimalsweightisthisnumber, NULL, TRUE)
+set.seed(10)
+animals=data.frame(weight=c(runif(3),NA), type=c("cat","mouse","dog","rat"))
+median(animals$weight, TRUE);mean(animals$weight, 0 , TRUE); var(animals$weight, NULL, TRUE)
 
 
-ggplot(thing.132232, aes(y=theanimalsweightisthisnumber,x=y))+geom_col()+scale_y_continuous()
+ggplot(animals, aes(x = type, y = weight, fill = type))+
+  geom_col()+
+  scale_y_continuous()+ 
+  labs(title = "Animal Weights", x = "Animal Type", y = "Animal Weight in LBs", fill = "Animal Type")+
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 18),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 10),
+    legend.position = "none")+
+  scale_fill_viridis_d(option = "plasma")+
+  scale_x_discrete(labels = c("Cat", "Mouse", "Dog", "Rat"))
 ```
 
 
@@ -101,12 +200,49 @@ For this problem, I want you to try to recreate a FiveThirtyEight.com graphic.  
 a. Take a screenshot of the graph, upload it to the same folder on the server where you have saved your lab, and insert the file name below.  Then change the `eval = FALSE` to `eval = TRUE`.
 
 
-```{r, out.width="100%", echo=FALSE, eval = FALSE}
-knitr::include_graphics("../img/538_graph.png")
+```{r, out.width="100%", echo=FALSE, eval = T}
+knitr::include_graphics("Screen Shot 2024-02-06 at 7.18.57 PM.png")
 ```
 
 
 b. Load the data and recreate the graph as best as you can.  
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+generic_ballot_averages <- read_csv('generic_ballot_averages.csv')
+
+generic_ballot_averages %>%
+  filter(cycle == "2018") %>%
+  group_by(candidate) %>%
+  ggplot(aes(x = date, y = pct_estimate, ymin = lo, ymax = hi, fill = candidate)) +
+  geom_line(size = 1.2) +
+  ylim(30, 60) +
+  geom_ribbon(alpha = 0.3) +
+  scale_fill_manual(values = c("Democrats" = "blue", "Republicans" = "red")) +
+  scale_y_continuous(breaks = seq(30, 60, by = 10), labels = paste0(seq(30, 60, by = 10), "%")) +
+  scale_x_date(
+    breaks = as.Date(c("2017-07-01", "2017-10-01", "2018-01-01", "2018-04-01", "2018-07-01", "2018-10-01")),
+    labels = c("Jul 1, 2017", "Oct 1, 2017", "Jan 1, 2018", "Apr 1, 2018", "Jul 1, 2018", "Oct 1, 2018"),
+    date_labels = "%b %d, %Y"
+  ) +
+  labs(
+    title = "Did voters want Democrats or Republicans in Congress?",
+    subtitle = "An updating estimate of the generic congressional ballot, based on polls that ask people which party \nthey would support in an election.",
+    x_axis = " "
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 15),
+    plot.subtitle = element_text(hjust = 0.5, size = 10),
+    legend.position = "right",
+    legend.box.just = "right",
+    legend.direction = "vertical",
+    legend.text = element_text(size = 8), 
+    legend.title = element_text(size = 0),
+    axis.title = element_blank() 
+  )
+```
 
 c. Now make the graph better somehow.
 
@@ -119,7 +255,7 @@ The data for this exercise comes from `TidyTuesday`, and is on rental prices in 
 Limit your analysis to rentals where the full unit is available, i.e. (`room_in_apt	== 0`). You have the flexibility to choose which years and which neighborhoods. Note that you should have a maximum of 8 neighborhoods on your visualization, but one or more of them can be a combination of many (e.g., an "other" category). Your visualization should also display some measure of the variability in your data.
 You get to decide what type of visualization to create and there is more than one correct answer! In your answer, include a brief description of why you made the choices you made as well as an interpretation of the findings of how rental prices vary over time and neighborhoods in San Francisco.
 
-```{r, eval = F}
+```{r, eval = T}
 # Get the Data
 
 # Read in with tidytuesdayR package 
@@ -129,7 +265,43 @@ You get to decide what type of visualization to create and there is more than on
 library(tidytuesdayR)
 tuesdata <- tidytuesdayR::tt_load('2022-07-05') # this could take a minute
 
-rent <- tuesdata$rent
-
+rent <- tuesdata$rent 
 ```
+
+```{r}
+top5_nhood <- unname(unlist(rent %>% filter(city == "san francisco", room_in_apt	== 0) %>% 
+  count(nhood) %>% arrange(desc(n)) %>%
+  head(n=5) %>% select(nhood))) 
+
+rent_cleaned <- rent %>% filter(city == "san francisco", room_in_apt	== 0) %>%
+  filter(nhood %in% top5_nhood) %>%
+  filter(!is.na(beds)) 
+
+rent_cleaned %>%
+  mutate(beds_clnr = case_when(
+    beds %in% c('5', '6', '7', '8') ~ '5+',
+    TRUE ~ as.character(beds),
+  )) %>%
+  ggplot(aes(x = year, y = price, color = nhood)) +
+  facet_wrap(~beds_clnr, labeller = labeller(beds_clnr = c('5+' = '5 or more bedrooms', '0' = '0 bedrooms','1' = '1 bedroom', '2' = '2 bedrooms', '3' = '3 bedrooms', '4' = '4 bedrooms'))) +
+ geom_jitter(alpha=.5)+
+  labs(
+    title="Rental Prices in the Top 5 San Francisco Neighborhoods Over Time",
+    subtitle="Organized by Neighborhood and Number of Bedrooms",
+    x="Year",
+    y="Price",
+    color="Neighborhood"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  ) +
+  scale_fill_brewer(
+    type = "qual",
+    palette = 7,
+    direction = 1,
+    aesthetics = "color"
+)
+```
+
 
