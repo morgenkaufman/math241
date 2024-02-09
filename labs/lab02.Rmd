@@ -49,7 +49,7 @@ library(viridis)
 
 ### Probem 1: Road traffic injuries in Edinburgh, Scotland 
 
-The dataset can be found in the `dsbox` package, and is called `accidents`. It covers all recorded accidents in Edinburgh in 2018; compared to the dataset made available by the UK government, some of the variables were modified for the purposes of the package. You can find out more about the dataset by inspecting its documentation with `?accidents`. Recreate the following plot, and interpret the results.
+The dataset can be found in the `dsbox` package, and is called `accidents`. It covers all recorded accidents in Edinburgh in 2018; compared to the data set made available by the UK government, some of the variables were modified for the purposes of the package. You can find out more about the data set by inspecting its documentation with `?accidents`. Recreate the following plot, and interpret the results.
 
 ```{r}
 data("accidents")
@@ -82,7 +82,7 @@ accidentsalt %>%
     fill = "Severity"
   )
 ```
-for this problem I wasnt able to get the exact colors so I went with similar colors but made them fit my personal style a bit more
+for this problem I wasn't able to get the exact colors so I went with similar colors but made them fit my personal style a bit more
 
 ```{r, out.width="100%", echo=FALSE}
 knitr::include_graphics("../img/edi-accidents-1.png")
@@ -91,7 +91,7 @@ knitr::include_graphics("../img/edi-accidents-1.png")
 
 ### Problem 2: One Dataset, Visualized ~~25~~ 5 Ways
 
-Inspired by Nathan Yau's [One Dataset, Visualized 25 Ways](https://flowingdata.com/2017/01/24/one-dataset-visualized-25-ways/), I want you to create 5 visualizations of the same data. You can use the `mpg` dataset or another dataset of your choosing, including the `accidents` dataset above. Make sure you have the data manual open for this problem!  
+Inspired by Nathan Yau's [One Dataset, Visualized 25 Ways](https://flowingdata.com/2017/01/24/one-dataset-visualized-25-ways/), I want you to create 5 visualizations of the same data. You can use the `mpg` data set or another dataset of your choosing, including the `accidents` dataset above. Make sure you have the data manual open for this problem!  
 
 
 a. Pick 3 - 4 variables you want to explore.  Provide their code names here.
@@ -101,7 +101,7 @@ b. Create 5 graphs.  A few things to consider:
     + Like Nathan's graphs, they don't all have to contain every one of your selected variables.
     + You can't use the same `geom` for all four graphs but you can use the same `geom` more than once.
     + Think carefully about color, the coordinate system, and scales.
-    + Feel free to subset or wrangling the dataset if you want to but it isn't required.
+    + Feel free to subset or wrangling the data set if you want to but it isn't required.
 
 ```{r, eval = T}
 
@@ -110,7 +110,7 @@ data("accidents")
 accident2 <- accidents
   
 ggplot(data=accident2, aes(x=vehicles, y=casualties, color=severity))+
-geom_point(size=4) +
+geom_count() +
    labs(
     title = "Number of vehicles in an accidents in relation to number of casualties",
     subtitle = "By severity classification",
@@ -162,11 +162,15 @@ geom_boxplot() +
 
 c. Discuss the pros/cons of your graphs.  What useful information can be gleaned?  How do the different geoms and aesthetics impact the story?
 
-1. 
-2.
-3.
-4.
-5. 
+1) This graphic looks at all the variables and provides (in my opinion) the clearest and most detailed presentation of data. The only issue which could be fixed with additional work is that smaller points are a little difficult to see. 
+
+2) The main thing that this graphic does well is show the trends sorted by severity. Unlike the previous which has all the observations mixed, this graphic allows for an easier time at looking at the trend for more specific severity. The main story being told by this graphic is thus the relationship between severity, number of vehichles, and casulties. This graphic is somewhat plain though which in theory could be fixed but I didn't have the time. 
+
+3) The major drawback with this graphic is that the there is a clear concentration of observations within the slight severity category. As a result, it makes observing the trends of the other two categories difficult as they are very small in comparison. 
+
+4) This tells a similar story to the previous one but it follows a density curve rather than frequency8 which makes it easier to view all the data for different severity. 
+
+5) This graphic shows distribution of vehicle counts organized by severity. It is similar to the previous two but it does not provide any concrete numbers like the others (frequency and density values) making it slightly less useful for in depth analysis. However this one unlike the others more clearly shows where the outlines are. 
 
 ### Problem 3: Style This Code!
 
@@ -207,7 +211,7 @@ knitr::include_graphics("Screen Shot 2024-02-06 at 7.18.57 PM.png")
 
 b. Load the data and recreate the graph as best as you can.  
 
-```{r}
+```{r, out.width="100%"}
 library(ggplot2)
 library(dplyr)
 
@@ -246,7 +250,11 @@ generic_ballot_averages %>%
 
 c. Now make the graph better somehow.
 
+See above. Since I wast able to make an exact copy some of the small changes that I made have been included in my main graphic, 
+
 d. Justify why your rendition of this `FiveThirtyEight.com` graph is more effective at telling the data story than the original. 
+
+The main quality of my graph that I think makes it more effective is that it is much cleaner and easier to read than the original. This is because I was not able to use the points which are on the original graphic but not in the data set. Because of this I think it allows for the reader to more clearly focus on the overall trend modeled by the line and ribbon geoms. 
 
 ### Problem 5: Rental apartments in SF
 
