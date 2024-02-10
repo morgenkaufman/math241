@@ -61,6 +61,8 @@ data(HELPfull) # this will explicitly ask R to load the HELPfull dataset to your
 count_na <- function(x){
   # your code here
 }
+
+
 ```
 
 2. Apply `count_na` to the columns of the `Teams` data frame from the `Lahman` package. How many of the columns have missing data?
