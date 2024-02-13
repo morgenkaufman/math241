@@ -1,6 +1,6 @@
 ---
 title: "Lab 3"
-#author: "Insert Name"
+#author: "Morgen Kaufman"
 date: "Math 241, Week 3"
 output:
   pdf_document
@@ -43,6 +43,7 @@ Here are the R objects we will use in this problem (`dats`, `pdxTreesSmall` and 
 ```{r}
 library(pdxTrees)
 library(mosaicData)
+library(dplyr)
 
 pdxTrees <- get_pdxTrees_parks()
 # Creating the objects
@@ -59,16 +60,45 @@ ht <- head(pdxTrees$Tree_Height, n = 15)
 ```
 
 a. What are the classes of `dats`, `pdxTreesSmall` and `ht`?
+dats: list
+pdxTreesSmall: data frame 
+ht: vector
 
 b. Find the 10th, 11th, and 12th values of `ht`.
+```{r}
+ht10_12 <- ht[10:12]
+print(ht10_12)
+```
+
 
 c. Provide the `Species` column of `pdxTrees` as a data frame with one column.
+```{r}
+pdxTrees_spec <- pdxTrees %>%
+  select(Species)
+```
+
 
 d. Provide the `Species` column of `pdxTrees` as a character vector.
+```{r}
+spec_vector <- as.character(pdxTrees$Species)
+```
 
 e. Provide code that gives us the second entry in `sets` from `dats`.
 
+```{r}
+dats[["sets"]][2]
+```
+
 f. Subset `pdxTreesSmall` to only `Douglas-fir` and then provide the `DBH` and `Condition` of the 4th `Douglas-fir` in the dataset.  (Feel free to mix in some `tidyverse` code if you would like to.)
+```{r}
+
+DF_DBHcon4 <- pdxTreesSmall %>% 
+  filter(Common_Name == "Douglas-Fir") %>%
+  select("Condition", "DBH") %>% 
+  slice(4)
+
+print(DF_DBHcon4)
+```
 
 
 
@@ -95,8 +125,30 @@ thing5 <- thing2 - thing4*thing3
 thing6 <- thing2 + thing4*thing3
 ```
 
+```{r}
+confidence_calc <- function(data, variable) {
+  n <- length(data[[variable]])
+  mean <- mean(data[[variable]])
+  se <- sd(data[[variable]])/sqrt(n)
+  t_val <- qt(p = 0.975, df = n - 1)
+  
+  lower <- mean - t_val * se
+  upper <- mean + t_val * se
+  
+  results_ci <- list(
+    n = n,
+    mean = mean,
+    se = se,
+    t_value = t_val,
+    lower_ci = lower,
+    upper_ci = upper
+  )
+  
+  return(results_ci)
+}
 
-
+confidence_calc(pdxTrees, "DBH")
+```
 
 
 ### Problem 3: Wrapper Function for your `ggplot`
@@ -128,14 +180,57 @@ a. Edit `histo()` so that the user can set
 * The fill color for the bars
 * The color outlining the bars
 
+```{r}
+histo <- function(data, x, bins = 5, fill_color = "grey", outline_color = "black"){
+   x <- enquo(x)
+  ggplot(data = data, mapping = aes(x = !!x)) +
+    geom_histogram(binwidth = bins, fill = fill_color, color = outline_color)
+}
+
+histo(pdxTrees, DBH, 5, "pink", "white")
+```
+
 b. Write code to create a basic scatterplot with `ggplot2`. Then write and test a function to create a basic scatterplot.
+
+```{r}
+scatter <- function(data, x, y){
+   x <- enquo(x)
+   y <- enquo(y)
+ ggplot(data = data, mapping = aes(x = !!x, y = !!y)) +
+    geom_point()
+}
+
+scatter(pdxTrees, Crown_Width_NS, Tree_Height)
+```
 
 c. Modify your scatterplot function to allow the user to ...
 
 * Color the points by another variable.
 * Set the transparency.
 
+```{r}
+scatter <- function(data, x, y, color_alt = NULL, transparency = 1.0){
+   x <- enquo(x)
+   y <- enquo(y)
+   color_alt <- enquo(color_alt)
+ ggplot(data = data, mapping = aes(x = !!x, y = !!y, color = !!color_alt)) +
+    geom_point(alpha = transparency)
+}
+
+scatter(pdxTrees, Crown_Width_NS, Crown_Width_EW, Condition, 0.5)
+```
+
 d. Write and test a function for your favorite `ggplot2` graph.
+```{r}
+boxplot <- function(data, x, y, fill_color = "grey", transparency = 1.0){
+   x <- enquo(x)
+   y <- enquo(y)
+ ggplot(data = data, mapping = aes(x = !!x, y = !!y)) +
+    geom_boxplot(fill = fill_color, alpha = transparency)
+}
+
+boxplot(pdxTrees, Condition, Tree_Height, "pink", 0.8)
+```
 
 
 ### Problem 4: Functioning `dplyr`
@@ -149,21 +244,63 @@ pdxTrees %>%
   group_by(Native) %>%
   mutate(prop = n/sum(n)) %>%
   ungroup()
+
+
+prop_tbl <-  function(data, group_var, count_var) {
+   group_var <- enquo(group_var)
+   count_var <- enquo(count_var)
+  data %>%
+    count(!!group_var, !!count_var) %>%
+    group_by(!!group_var) %>%
+    mutate(prop = n / sum(n)) %>%
+    ungroup()
+}
+
+prop_tbl(pdxTrees, Native, Condition)
+
 ```
 
 
 b.  Write a function to compute the mean, median, sd, min, max, sample size, and number of missing values of a quantitative variable by the categories of another variable.  Make sure the output is a data frame (or tibble).  Don't forget to test your function.
+
+```{r}
+data_stats <- function(data, cat_var, quant_var) {
+  cat_var <- enquo(cat_var)
+  quant_var <- enquo(quant_var) 
+  data %>%
+    group_by(!!cat_var) %>%
+    summarize(
+      mean = mean(!!quant_var, na.rm = TRUE),
+      median = median(!!quant_var,  na.rm = TRUE),
+      sd = sd(!!quant_var,  na.rm = TRUE),
+      min = min(!!quant_var,  na.rm = TRUE),
+      max = max(!!quant_var,  na.rm = TRUE),
+      count = n(),
+      missing_values = sum(is.na(!!quant_var))
+    ) %>%
+    ungroup()
+}
+
+data_stats(pdxTrees, Condition, Crown_Width_NS)
+```
 
 
 ### Problem 5: another `babynames` exercise
 
 Write a function called grab_name that, when given a **name** ***and a year*** as an argument, returns the rows from the `babynames` data frame in the `babynames` package that match that name for that year (and returns an error if that name and year combination does not match any rows). Run the function once with the arguments **Ezekiel and 1883** and once with **Ezekiel and 1983**.
 
-```{r, eval=FALSE}
-#' Make sure to switch eval = FALSE to eval = TRUE before knitting!!
 
+```{r}
 grab_name <- function(myname, myyear) {
-  # Code your function here
+  myyear <- enquote(myyear)
+  results <- babynames %>%
+    filter(name == myname, year == !!myyear)
+  if(nrow(results) == 0) {
+    stop("No matching rows for the provided name and year combination")
+  }
+  return(results)
 }
 
+grab_name("Ezekiel", 1983)
 ```
+
