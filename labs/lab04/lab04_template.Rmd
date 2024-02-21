@@ -1,6 +1,6 @@
 ---
 title: "Lab 4"
-#author: "Morgen Kaufman
+#author: "Insert Name"
 date: "Math 241, Week 4"
 output:
   pdf_document
@@ -14,9 +14,137 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```{r}
 # Put all necessary libraries here
 library(tidyverse)
+library(readr)
 ```
 
 ### Problem 1: COVID survey - interpretation
 
 
 ### Problem 2: COVID survey - reconstruct
+
+```{r}
+covid_survey <- read_csv("data/covid-survey.csv")
+```
+
+```{r}
+covid_survey <- read_csv("data/covid-survey.csv")
+covid_survey_clean <- covid_survey %>%
+  filter(rowSums(!is.na(.[-1])) > 0)
+dim(covid_survey_clean)
+```
+
+```{r}
+colnames(covid_survey_clean) <- covid_survey_clean[1, ]
+covid_survey_rmv <- covid_survey_clean[-1, ]
+```
+
+```{r}
+covid_survey_relab <- covid_survey_rmv %>%
+  mutate(exp_already_vax = case_when(
+    exp_already_vax == 0 ~ "No",
+    exp_already_vax == 1 ~ "Yes"),
+    exp_flu_vax = case_when(
+      exp_flu_vax == 0 ~ "No",
+      exp_flu_vax == 1 ~ "Yes"),
+    exp_profession = case_when(
+      exp_profession == 0 ~ "Medical",
+      exp_profession == 1 ~ "Nursing"),
+    exp_gender = case_when(
+      exp_gender == 0 ~ "Male",
+      exp_gender == 1 ~ "Female",
+      exp_gender == 3 ~ "Non-binary third gender",
+      exp_gender == 4 ~ "Prefer not to say"),
+    exp_race = case_when(
+      exp_race == 1 ~ "American Indian / Alaskan Native",
+      exp_race == 2 ~ "Asian",
+      exp_race == 3 ~ "Black / African American",
+      exp_race == 4 ~ "Native Hawaiian / Other Pacific Islander",
+      exp_race == 5 ~ "White"),
+    exp_ethnicity = case_when(
+      exp_ethnicity == 1 ~ "Hispanic / Latino",
+      exp_ethnicity == 2 ~ "Non-Hispanic/Non-Latino"),
+exp_age_bin = case_when(
+exp_age_bin == 0 ~ "<20",
+exp_age_bin == 20 ~ "21-25",
+exp_age_bin == 25 ~ "26-30",
+exp_age_bin == 30 ~ ">30")
+)
+
+dim(covid_survey_relab)
+```
+
+```{r}
+covid_survey_longer <- covid_survey_relab %>% 
+  pivot_longer(
+    cols = starts_with("exp_"), 
+    names_to = "explanatory", 
+    values_to = "explanatory_value"
+) %>% 
+  filter(!is.na(explanatory_value)) %>% 
+  pivot_longer(
+    cols = starts_with("resp_"), 
+    names_to = "response", 
+    values_to = "response_value"
+)
+
+covid_survey_longer
+```
+
+EXPLAINNNNNNNNNNNNNNNNnnnnnnnsfower8r23tu[90t24309uo]
+
+```{r}
+covid_survey_summary_stats_by_group <- covid_survey_longer %>%
+group_by(explanatory, explanatory_value, response) %>%
+summarise(mean = mean(as.numeric(response_value), na.rm = TRUE),
+    low = quantile(as.numeric(response_value, na.rm = TRUE), 0.1, na.rm = TRUE),
+    high = quantile(as.numeric(response_value, na.rm = TRUE), 0.9, na.rm = TRUE)
+  )
+
+covid_survey_summary_stats_by_group
+```
+```{r}
+covid_survey_summary_stats_all <- covid_survey_longer %>%
+group_by(response) %>%
+summarise(mean = mean(as.numeric(response_value), na.rm = TRUE),
+    low = quantile(as.numeric(response_value, na.rm = TRUE), 0.1, na.rm = TRUE),
+    high = quantile(as.numeric(response_value, na.rm = TRUE), 0.9, na.rm = TRUE)
+  )
+
+covid_survey_summary_stats_all
+```
+
+```{r}
+covid_survey_summary_stats <- bind_rows(covid_survey_summary_stats_all,covid_survey_summary_stats_by_group)
+covid_survey_summary_stats
+```
+
+```{r}
+covid_survey_summary_stats %>%
+geom_boxplot(aes(x = mean)) %>% 
+  labs(
+    "exp_age_bin" = "Age",
+    "exp_gender" = "Gender",
+    "exp_race" = "Race",
+    "exp_ethnicity" = "Ethnicity",
+    "exp_profession" = "Profession",
+    "exp_already_vax" = "Had COVID vaccine",
+    "exp_flu_vax" = "Had flu vaccine this year"
+    )
+  
+facet_grid(labeller = labeller = labeller(explanatory = label_wrap_gen(15)))
+
+
+
+
+"resp_safety" = "Based on my understanding, I believe the vaccine is safe",
+"resp_confidence_science" = "I am confident in the scientific vetting process for the new
+COVID vaccines",
+"resp_feel_safe_at_work" = "Getting the vaccine will make me feel safer at work",
+"resp_will_recommend" = "I will recommend the vaccine to family, friends, and community
+members",
+"resp_trust_info" = "I trust the information that I have received about the vaccines",
+"resp_concern_safety" = "I am concerned about the safety and side effects of the vaccine"
+
+
+```
+
