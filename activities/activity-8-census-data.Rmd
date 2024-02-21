@@ -35,7 +35,7 @@ In order to directly download data from the Census API, you need a key. You can 
 Type your key in quotes using the `census_api_key()` command
 
 ```{r, eval = F}
-census_api_key("YOUR API KEY GOES HERE", install = TRUE)
+census_api_key("b3c5304d552e16e473b315db0ad7302455075d08", install = TRUE)
 ```
 
 
@@ -128,7 +128,14 @@ or_county %>%
 We can create new variables using the `mutate()` function. For example, you can create a variable for the percentage of the population that is white for each county in Oregon, and map it.
 
 ```{r, eval = FALSE}
-
+or_county %>%
+  st_as_sf() %>%
+  mutate('percent_whiteE' = white_popE/total_popE) %>%
+  ggplot() +
+  geom_sf(aes(fill = percent_whiteE)) +
+  scale_fill_viridis_c() +
+  labs(fill = "% of Population White") +
+  theme_void()
 ```
 
 ## Census tracts
@@ -170,12 +177,37 @@ Look at the data to see if it contains only Multnomah county tracts.
 
 ```{r}
 
+glimpse(mutlnomah_tracts)
+
 ```
 
 
 ## Data Wrangling and Visualization
 
 Let's look at housing values `B25077_001`. Choose your county of birth (or any county you like) and all its adjacent counties. Create a visualization of the distribution of the median home values by census tract, for each county, using the most recent ACS data available (probably 2022).
+
+```{r}
+ca <- get_acs(geography = "tract", 
+              year = 2022,
+              variables = c(housing_value = "B25077_001"), 
+              county = c("Los Angeles", "Ventura", "San Bernardino"),
+              state = "CA",
+              survey = "acs5",
+              output = "wide")
+
+ca_sf <- counties(state = "CA", cb = TRUE)
+
+housing_county <- left_join(ca, ca_sf, by = c("GEOID" = "GEOID"))
+
+housing_county %>%
+  st_as_sf() %>%
+  ggplot() +
+  geom_sf(aes(fill = housing_valueE)) +
+  scale_fill_viridis_c() +
+  labs(fill = "Cost") +
+  theme_void()
+
+```
 
 
 
