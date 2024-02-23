@@ -39,6 +39,21 @@ champ_table
 
 Using the same approach, grab the table of Portland's population over time (table 4), and create a simple visualization of the total population count over time.
 
+```{r}
+
+port_pop <- html_table(tables[[4]], fill = TRUE)
+port_pop
+
+port_pop2 <- port_pop %>% 
+  as.numeric(port_pop$Pop.)
+  
+
+port_pop %>%
+  ggplot(aes(x=Census, y = (Pop.)) +
+  geom_point()
+```````
+
+
 
 # Another Example
 
@@ -46,12 +61,12 @@ Using the same approach, grab the table of Portland's population over time (tabl
 
 ```{r}
 # Store url
-url <- "https://www.nytimes.com/interactive/2017/05/25/sunday-review/opinion-pell-table.html"
+url2 <- "https://www.nytimes.com/interactive/2017/05/25/sunday-review/opinion-pell-table.html"
 
 ## Scrape html and store table
 
 # Grab the table
-tables <- url %>%
+tables <- url2 %>%
   read_html() %>%
   html_nodes(css = "table")
 
@@ -59,14 +74,24 @@ tables <- url %>%
 college_access_table <- html_table(tables[[1]], fill = TRUE)
 
 #Option 2: Use the specific css
-college_access_table2 <- url %>%
+college_access_table2 <- url2 %>%
   read_html() %>%
   html_node(css = "#opinion-pell-table > div > div.g-item.g-sortable-table > table") %>%
   html_table()
-
-
 ```
 
 ## Create a visualization
 
 Choose 3 variables and create a heuristic visualization using this dataset.
+
+```{r}
+college_access_table2 <- college_access_table2 %>%
+  mutate(fresh = as.numeric(gsub(',','',`Freshman class`)))
+  
+  
+  
+college_access_table2 %>%
+  ggplot(aes(x = fresh, y = `Pell grad share`, color = `College Access Index`))+
+  geom_point(size=2)
+```
+

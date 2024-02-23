@@ -1,6 +1,6 @@
 ---
 title: "Lab 4"
-#author: "Insert Name"
+#author: "Morgen Kaufman"
 date: "Math 241, Week 4"
 output:
   pdf_document
@@ -19,6 +19,14 @@ library(readr)
 
 ### Problem 1: COVID survey - interpretation
 
+This graphic is quite difficult to interpret as there are many variables with relatively large error bars nd thus there is a lot of variably within the data. 
+
+Some interpretations: 
+1. Individuals age 30 and under tended to agree more with the statement "I trust the information that I have received about the vaccines" in comparison to those over the age of 30. 
+
+2. Regardless of gender, individuals on average agreed with the statement "Getting the vaccine will make me feel safer at work"
+
+3. Individuals in the medical field on average agreed the most this the statement "Based on my understanding, I believe the vaccine is safe" 
 
 ### Problem 2: COVID survey - reconstruct
 
@@ -119,32 +127,36 @@ covid_survey_summary_stats
 ```
 
 ```{r}
+covid_survey_summary_stats <- covid_survey_summary_stats %>%
+  mutate( 
+    response = case_when(
+    response == "resp_safety" ~ "Based on my understanding, I believe the vaccine is safe",
+    response == "resp_confidence_science" ~ "I am confident in the scientific vetting process for the new COVID vaccines",
+    response ==   "resp_feel_safe_at_work" ~ "Getting the vaccine will make me feel safer at work",
+    response == "resp_will_recommend" ~ "I will recommend the vaccine to family, friends, and community members",
+    response == "resp_trust_info" ~ "I trust the information that I have received about the vaccines",
+    response == "resp_concern_safety" ~ "I am concerned about the safety and side effects of the vaccine")) %>%
+  mutate( 
+    explanatory = case_when(
+    explanatory == "exp_age_bin" ~ "Age",
+    explanatory == "exp_gender" ~ "Gender",
+    explanatory == "exp_race" ~ "Race",
+    explanatory == "exp_ethnicity" ~ "Ethnicity",
+    explanatory == "exp_profession" ~ "Profession",
+    explanatory == "exp_already_vax" ~ "Had COVID vaccine",
+    explanatory == "exp_flu_vax" ~ "Had flu vaccine this year"))
+```
+
+```{r, fig.width=9, fig.height=10}
 covid_survey_summary_stats %>%
-geom_boxplot(aes(x = mean)) %>% 
+  na.omit() %>%
+  ggplot(aes(x = mean, y = explanatory_value)) +
+  geom_point()+
+  geom_errorbar(aes(xmin = low, xmax = high))+
+  facet_grid(rows = vars(explanatory), cols = vars(response), scales = 'free', labeller = label_wrap_gen(width = 15)) +
   labs(
-    "exp_age_bin" = "Age",
-    "exp_gender" = "Gender",
-    "exp_race" = "Race",
-    "exp_ethnicity" = "Ethnicity",
-    "exp_profession" = "Profession",
-    "exp_already_vax" = "Had COVID vaccine",
-    "exp_flu_vax" = "Had flu vaccine this year"
-    )
-  
-facet_grid(labeller = labeller = labeller(explanatory = label_wrap_gen(15)))
-
-
-
-
-"resp_safety" = "Based on my understanding, I believe the vaccine is safe",
-"resp_confidence_science" = "I am confident in the scientific vetting process for the new
-COVID vaccines",
-"resp_feel_safe_at_work" = "Getting the vaccine will make me feel safer at work",
-"resp_will_recommend" = "I will recommend the vaccine to family, friends, and community
-members",
-"resp_trust_info" = "I trust the information that I have received about the vaccines",
-"resp_concern_safety" = "I am concerned about the safety and side effects of the vaccine"
-
-
+    title = NULL,
+    x = "Mean Likert score \n (Error bars range from 10th to 90th percentile)",
+    y = NULL)
 ```
 
