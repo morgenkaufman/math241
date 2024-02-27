@@ -1,6 +1,6 @@
 ---
 title: "Lab 5"
-#author: "Insert Name"
+#author: "Morgen Kaufman"
 date: "Math 241, Week 6"
 output:
   pdf_document
@@ -20,6 +20,7 @@ library(tidyverse)
 library(rnoaa)
 library(rvest)
 library(httr)
+library(ggplot2)
 ```
 
 
@@ -49,41 +50,58 @@ library(rnoaa)
 
 a. First things first, go to [this NOAA website](https://www.ncdc.noaa.gov/cdo-web/token) to get a key emailed to you.  Then insert your key below:
 
-```{r, eval = FALSE}
-options(noaakey = "INSERT KEY")
+```{r, eval = T}
+options(noaakey = "YHYMXktJADOYAHDGHqMwoIxtVCzdnHXT")
 ```
 
 
 
 b. From the National Climate Data Center (NCDC) data, use the following code to grab the stations in Multnomah County. How many stations are in Multnomah County?
 
-```{r, eval = FALSE}
+```{r, eval = T}
 stations <- ncdc_stations(datasetid = "GHCND", 
                           locationid = "FIPS:41051")
 
 mult_stations <- stations$data
 ```
 
-
+There are 25 stations in the county.
 
 c. January was not so rainy this year, was it?  Let's grab the precipitation data for site `GHCND:US1ORMT0006` for this past January.
 
-```{r, eval = FALSE}
+```{r, eval = T}
 # First fill-in and run to following to determine the
 # datatypeid
 ncdc_datatypes(datasetid = "GHCND",
-               stationid = "")
+               stationid = "GHCND:US1ORMT0006")
 
 # Now grab the data using ncdc()
-precip_se_pdx <- ncdc()
+precip_se_pdx <- ncdc(
+                      datasetid = "GHCND",
+                      stationid = "GHCND:US1ORMT0006",
+                      datatypeid = "PRCP",
+                      startdate = "2024-01-01",
+                      enddate = "2024-01-31")
+
+precip_se_pdx
 ```
 
-d.  What is the class of `precip_se_dpx`?  Grab the data frame nested in `precip_se_dpx` and call it `precip_se_dpx_data`.
+d.  What is the class of `precip_se_pdx`?  Grab the data frame nested in `precip_se_pdx` and call it `precip_se_pdx_data`.
+```{r}
+class(precip_se_pdx)
+precip_se_pdx_data <- precip_se_pdx$data
+```
 
+precip_se_pdx class is listed as "ncdc_data" In the environemnt it shows up as a list 
 
 
 e. Use `ymd_hms()` in the package `lubridate` to wrangle the date column into the correct format.
 
+```{r}
+library(lubridate)
+
+test <- ymd_hms(precip_se_pdx_data$date)
+```
 
 
 f. Plot the precipitation data for this site in Portland over time.  Rumor has it that we had only one day where it didn't rain.  Is that true?
@@ -108,6 +126,38 @@ Here are some potential API wrapper packages.  Feel free to use one not included
 * [`rfishbase`](https://github.com/ropensci/rfishbase): For the fish lovers
 * [`darksky`](https://github.com/hrbrmstr/darksky): For global historical and current weather conditions
 
+```{r}
+library(rfishbase)
+library(dplyr)
+```
+
+```{r}
+fb_tables()
+spec <- fb_tbl("species")
+
+fresh_spec <- spec %>%
+  filter(Fresh == "1")
+
+fresh_spec %>% 
+  count(AnaCat) %>%
+  arrange(desc(n))
+
+fresh_spec_mig <- fresh_spec %>% 
+  filter(AnaCat %in% c("non-migratory","oceanodromous", "potamodromous", "amphidromous", "anadromous", "catadromous", "oceanodromous"))
+
+
+fresh_spec_mig %>%
+  ggplot(aes(x = Length)) +
+  geom_boxplot() +
+  facet_wrap(~ AnaCat, scales = "free_x")
+
+fresh_spec_mig %>%
+  group_by(AnaCat) %>%
+  summarise(Mean = mean(Length, na.rm = TRUE),
+            Low = quantile(Length, 0.1, na.rm = TRUE),
+            High = quantile(Length, 0.9, na.rm = TRUE),
+            Count = n())
+```
 
 
 ## Problem 3: Scraping Reedie Data
@@ -116,21 +166,63 @@ Let's see what lovely data we can pull from Reed's own website.
 
 a. Go to [https://www.reed.edu/ir/success.html](https://www.reed.edu/ir/success.html) and scrape the two tables.
 
+```{r}
+url <- "https://www.reed.edu/ir/success.html"
+
+tables <- url %>%
+  read_html() %>%
+  html_nodes(css = "table")
+
+tbl1 <- html_table(tables[[1]], fill = TRUE)
+tbl1
+
+tbl2 <- html_table(tables[[2]], fill = TRUE)
+tbl2
+
+tbl3 <- html_table(tables[[3]], fill = TRUE)
+tbl3
+```
 
 
 
 b. Grab and print out the table that is entitled "GRADUATE SCHOOLS MOST FREQUENTLY ATTENDED BY REED ALUMNI".  Why is this data frame not in a tidy format?
 
+Not sure if I am supposed to answer this question or not but the reason its format isnt tidy is because 
+
+
+Each variable must have its own column. Each observation must have its own row. Each value must have its own cell.
+```{r}
+tbl2
+```
 
 
 c. Wrangle the data into a tidy format. Glimpse the resulting data frame.
 
+```{r}
+
+```
 
 
 d. Now grab the "OCCUPATIONAL DISTRIBUTION OF ALUMNI" table and turn it into an appropriate graph.  What conclusions can we draw from the graph?
 
 ```{r}
 # Hint: Use `parse_number()` within `mutate()` to fix one of the columns
+
+  
+ 
+alum <- tbl1 %>%
+  mutate(X2 = parse_number(X2))
+
+alum %>%
+  ggplot(aes(x = X1, y = X2, fill = X1)) +
+  geom_bar(stat = "identity") +
+  labs(
+    y = "Percentage", 
+    x = "Occupation Category",
+    title = "Occupational Distribution of Alumni") +
+  theme(
+    axis.text.x = element_blank(),
+    legend.title = element_blank()) 
 ```
 
 
@@ -143,16 +235,31 @@ Do the following to clean up the data:
 
 * Rename the column names.  
 
-```{r,eval = FALSE}
-# Hint
-colnames(___) <- c("name 1", "name 2", ...)
+```{r,eval = T}
+url_2 <- "https://www.reed.edu/ir/gradrateshist.html"
+
+grads <- url_2 %>%
+  read_html() %>%
+  html_nodes(css = "table")
+
+grad_rates <- html_table(grads[[1]], fill = TRUE)
+
+colnames(grad_rates) <- c("first_year_fall", "count", "four_years", "five_years", "six_years")
+ 
+grad_parse <- grad_rates %>% mutate(
+                                four_years = parse_number(four_years),
+                                five_years = parse_number(five_years),
+                                six_years = parse_number(six_years))
+grad_parse
 ```
+
 
 * Remove any extraneous rows.
 
-```{r, eval = FALSE}
-# Hint
-filter(row_number() ...)
+```{r, eval = T}
+grad_rm <- grad_parse %>% filter(row_number() != 1)
+
+grad_rm
 ```
 
 * Reshape the data so that there are columns for 
@@ -161,7 +268,24 @@ filter(row_number() ...)
     + Years to graduation
     + Graduation rate
 
+```{r}
+grad_long <- grad_rm %>%
+  pivot_longer(c("four_years", "five_years", "six_years"),
+               names_to = "years_to_graduation",
+               values_to = "graduation_rate") %>%
+         mutate(cohort_size = as.numeric(count)) %>%
+   select(first_year_fall, cohort_size, years_to_graduation, graduation_rate)
+grad_long
+```
+
 * Make sure each column has the correct class.    
 
 
 f. Create a graph comparing the graduation rates over time and draw some conclusions.
+
+```{r}
+grad_long %>%
+ggplot(aes(x= first_year_fall, y= graduation_rate, color=years_to_graduation))+
+  geom_point()
+```
+
