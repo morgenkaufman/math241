@@ -90,6 +90,8 @@ d.  What is the class of `precip_se_pdx`?  Grab the data frame nested in `precip
 ```{r}
 class(precip_se_pdx)
 precip_se_pdx_data <- precip_se_pdx$data
+
+precip_se_pdx_data
 ```
 
 precip_se_pdx class is listed as "ncdc_data" In the environemnt it shows up as a list 
@@ -100,17 +102,70 @@ e. Use `ymd_hms()` in the package `lubridate` to wrangle the date column into th
 ```{r}
 library(lubridate)
 
-test <- ymd_hms(precip_se_pdx_data$date)
+precip_pdx_data_clean <- precip_se_pdx_data %>%
+  mutate(date = ymd_hms(date)) 
 ```
 
 
 f. Plot the precipitation data for this site in Portland over time.  Rumor has it that we had only one day where it didn't rain.  Is that true?
 
+```{r}
+precip_pdx_data_clean %>%
+  ggplot(aes(x = day(date), y = value))+
+  geom_line()
+```
+No this claim is false. We can see that there were multiplke days where there was no rain in January. 
+
 
 g. (Bonus) Adapt the code to create a visualization that compares the precipitation data for January over the the last four years.  Do you notice any trend over time?
 
+```{r}
+precip_24 <- ncdc(
+                      datasetid = "GHCND",
+                      stationid = "GHCND:US1ORMT0006",
+                      datatypeid = "PRCP",
+                      startdate = "2024-01-01",
+                      enddate = "2024-01-31")
+
+precip_23 <- ncdc(
+                      datasetid = "GHCND",
+                      stationid = "GHCND:US1ORMT0006",
+                      datatypeid = "PRCP",
+                      startdate = "2023-01-01",
+                      enddate = "2023-01-31")
+precip_22 <- ncdc(
+                      datasetid = "GHCND",
+                      stationid = "GHCND:US1ORMT0006",
+                      datatypeid = "PRCP",
+                      startdate = "2022-01-01",
+                      enddate = "2022-01-31")
+
+precip_21 <- ncdc(
+                      datasetid = "GHCND",
+                      stationid = "GHCND:US1ORMT0006",
+                      datatypeid = "PRCP",
+                      startdate = "2021-01-01",
+                      enddate = "2021-01-31")
+
+precip_24_data <- precip_24$data
+precip_23_data <- precip_23$data
+precip_22_data <- precip_22$data
+precip_21_data <- precip_21$data
 
 
+precip <- bind_rows(precip_24_data, precip_23_data, precip_22_data, precip_21_data)
+
+precip_clean <- precip %>%
+  mutate(date = ymd_hms(date)) 
+
+precip_clean %>%
+  ggplot(aes(x = day(date), y = value))+
+  geom_point()+
+  geom_line()+
+  facet_wrap(~year(date))
+```
+
+Trends: it seems as though over the last few years the amount of rain in January has evened out. It still rains white a bit in January but the highest levels in 2023 and 2024 r emuch lower than 2021 and 2022. 
 
 ## Problem 2: From API to R 
 
@@ -132,7 +187,6 @@ library(dplyr)
 ```
 
 ```{r}
-fb_tables()
 spec <- fb_tbl("species")
 
 fresh_spec <- spec %>%
@@ -145,19 +199,22 @@ fresh_spec %>%
 fresh_spec_mig <- fresh_spec %>% 
   filter(AnaCat %in% c("non-migratory","oceanodromous", "potamodromous", "amphidromous", "anadromous", "catadromous", "oceanodromous"))
 
-
-fresh_spec_mig %>%
-  ggplot(aes(x = Length)) +
-  geom_boxplot() +
-  facet_wrap(~ AnaCat, scales = "free_x")
-
 fresh_spec_mig %>%
   group_by(AnaCat) %>%
   summarise(Mean = mean(Length, na.rm = TRUE),
             Low = quantile(Length, 0.1, na.rm = TRUE),
             High = quantile(Length, 0.9, na.rm = TRUE),
             Count = n())
+
+fresh_spec_mig %>%
+  ggplot(aes(x = Length)) +
+  geom_boxplot() +
+  facet_wrap(~ AnaCat, scales = "free_x")
 ```
+
+Conclusions: 
+
+Migration patterns may have an effect on fish length. This would need to be tested further however as we can see nonmigratory fish tend to be much smaller than other types of fish. Additionally,  oceanodromous fish were on average the largest in length however they are also the smallest sampled group and as such this data may be skewed. Anadromous fish have the most varaibility it seems when it comes to length. 
 
 
 ## Problem 3: Scraping Reedie Data
@@ -187,7 +244,7 @@ tbl3
 
 b. Grab and print out the table that is entitled "GRADUATE SCHOOLS MOST FREQUENTLY ATTENDED BY REED ALUMNI".  Why is this data frame not in a tidy format?
 
-Not sure if I am supposed to answer this question or not but the reason its format isnt tidy is because 
+Not sure if I am supposed to answer this question or not but the reason its format inst tidy is because every observation doesnt have its own rows.
 
 
 Each variable must have its own column. Each observation must have its own row. Each value must have its own cell.
@@ -199,7 +256,10 @@ tbl2
 c. Wrangle the data into a tidy format. Glimpse the resulting data frame.
 
 ```{r}
+tbl2_pivot <- tbl2 %>%
+   pivot_longer(c(`MBAs`, `JDs`,`PhDs`,`MDs`), names_to = "Degree",  values_to = "School")
 
+glimpse(tbl2_pivot)
 ```
 
 
@@ -207,9 +267,7 @@ d. Now grab the "OCCUPATIONAL DISTRIBUTION OF ALUMNI" table and turn it into an 
 
 ```{r}
 # Hint: Use `parse_number()` within `mutate()` to fix one of the columns
-
   
- 
 alum <- tbl1 %>%
   mutate(X2 = parse_number(X2))
 
@@ -285,7 +343,10 @@ f. Create a graph comparing the graduation rates over time and draw some conclus
 
 ```{r}
 grad_long %>%
-ggplot(aes(x= first_year_fall, y= graduation_rate, color=years_to_graduation))+
-  geom_point()
+ggplot(aes(x= first_year_fall, y= graduation_rate, group=years_to_graduation, color = years_to_graduation))+
+  geom_point() +
+  geom_line() +
+  scale_x_discrete(breaks = seq(1982,2019, by = 5))
 ```
 
+Over time, graduation rates have risen. Additionally the more years it takes for students to graduate the higher the graduation rate. 
