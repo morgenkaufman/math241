@@ -33,7 +33,7 @@ library(RColorBrewer)
 
 ```{r, eval = F}
 # Load in your Census API key (replace YOUR_API_KEY with your actual key)
-census_api_key("YOUR_API_KEY", install = TRUE)
+census_api_key("b3c5304d552e16e473b315db0ad7302455075d08", install = TRUE)
 ```
 
 ## Retrieving Spatial Data for Multnomah County, OR
@@ -168,6 +168,7 @@ tm_shape(or_tracts) +
   tm_polygons(col = "medincome", style = "quantile", palette = "BuGn", title = "Median Household Income") +
   tm_layout(main.title = "Median Household Income in Multnomah County, 2018-2022",
             main.title.position = "center",
+            legend.outside = TRUE,
             legend.position = c("right", "top"))
 ```
 
@@ -267,14 +268,14 @@ So far we’ve created static maps. That is, maps that don’t "move". But, we�
 
 To make your tmap object interactive, use the function `tmap_mode()`. Type in "view" inside this function.
 
-```{r, include=F}
+```{r}
 tmap_mode("view")
 ```
 
 
 Now that the interactive mode has been ‘turned on’, all maps produced with `tm_shape()` will launch. Let’s view our saved `mult_pfb_map` interactively:
 
-```{r, include=F}
+```{r}
 mult_pfb_map
 ```
 
@@ -285,7 +286,7 @@ The function of a basemap is to provide background detail necessary to orient th
 
 The default basemap in `tmap_mode()` is `CartoDB.Positron`. You can change the basemap through the `tm_basemap()` function. For example, let’s change the basemap to an `OpenStreetMap`:
 
-```{r, include=F}
+```{r}
 tm_shape(or_tracts, unit = "mi") +
     tm_polygons(col = "pfb", style = "quantile",palette = "Reds",
                 title = "% foreign-born") +
@@ -302,7 +303,7 @@ tm_shape(or_tracts, unit = "mi") +
 
 You can save your interactive map using the same methods described for static maps. To switch back to plotting mode (noninteractive), type in:
 
-```{r, include = F}
+```{r}
 tmap_mode("plot")
 ```
 
