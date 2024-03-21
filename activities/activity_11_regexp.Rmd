@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 #Load tidyverse
 library(tidyverse)
 library(mdsr)
+library(stringr)
 ```
 
 
@@ -26,6 +27,16 @@ a. Find all of the adjectives in Macbeth that end in more or less
 ```{r}
 data(Macbeth_raw)
 
+macbeth <- Macbeth_raw %>%
+  str_split("\r\n") %>% 
+  pluck(1)
+length(macbeth)
+
+lessismore <- macbeth %>%
+  str_subset("[a-z](more|less)")
+
+lessismore %>% 
+  head()
 ```
 
 
@@ -33,6 +44,11 @@ b. Find all of the lines containing the stage direction Exit or Exeunt.
 
 ```{r}
 
+direct <- macbeth %>%
+  str_subset("(Exit|Exeunt)")
+
+direct %>% 
+  head()
 ```
 
 ## Problem 2 (Medium): 
@@ -40,9 +56,21 @@ b. Find all of the lines containing the stage direction Exit or Exeunt.
 a. Use regular expressions to determine the number of speaking lines in the Complete Works of William Shakespeare. Here, we care only about how many times a character speaks—not what they say or for how long they
 speak.
 
-```{r, eval = FALSE}
-shakespeare_url <- "http://www.gutenberg.org/files/100/100-0.txt"
-shakespeare <- RCurl::getURL(shakespeare_url) %>%
+```{r, eval = T}
+shakespeare_url <- "https://www.gutenberg.org/files/100/100-0.txt"
+shakespeare <- RCurl::getURL(shakespeare_url)
+data(shakespeare)
+
+shakespeare %>%
+  str_split("\r\n") %>% 
+  pluck(1)
+  length(shakespeare)
+
+shake <- shakespeare %>%
+  str_subset("[A-Z](.)")
+
+shake %>% 
+  head()
   
 ```
 

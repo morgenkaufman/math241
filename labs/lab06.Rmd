@@ -1,9 +1,8 @@
 ---
 title: "Lab 6"
-author: "Morgen Kaufman
+author: "Morgen Kaufman"
 date: "Math 241, Week 8"
-output:
-  pdf_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -16,6 +15,8 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(leaflet)
 library(tidycensus)
+library(lubridate)
+library(tmap)
 ```
 
 
@@ -39,22 +40,129 @@ biketown_data <- bind_rows(readr::read_csv("https://s3.amazonaws.com/biketown-tr
 
   select(StartDate, StartTime, EndDate, EndTime, Distance_Miles,
          BikeID, StartLatitude, StartLongitude)
+
+biketown_data
 ```
 
 b. Create an interactive map of the start point of the rides using the `leaflet` package.  Make sure to include a legend and a title.  What do you notice about the distribution of rides?
+
+```{r}
+leaflet(data = biketown_data) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    ~StartLongitude, ~StartLatitude,
+    radius = 2
+  ) %>%
+  addLegend(
+    position = "bottomleft",
+    colors = "green",
+    labels = "Start Point",
+    title = "Ride Start Points"
+  )
+```
+
+The the data distribution shows a heavy concentration in Downtown PDX and pearl district with decent distribution east of downtown. As we move farther away from the city center, distribution decreases.
+
 
 c. Using the `lubridate` package, create a variable, `month`, indicating the month of each variable.
 
 Add this variable to your interactive map using color.  Make sure to include a legend and be mindful of your color palette choice.  Do ride locations vary by months of the year?
 
+```{r}
+biketown <- biketown_data %>%
+  mutate(StartDate = mdy(StartDate),
+         EndDate = mdy(EndDate)) %>%
+  mutate(StartDateTime = ymd_hms(paste(StartDate, StartTime, sep = " ")),
+         EndDateTime = ymd_hms(paste(EndDate, EndTime, sep = " "))) 
+
+biketown$month <- month(biketown$StartDate)
+
+
+leaflet(data = biketown) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    ~StartLongitude, ~StartLatitude,
+    color = ~ifelse(month == 1, "red",
+             ifelse(month == 7, "blue",
+             ifelse(month == 11, "green", NA))),
+    radius = 2,
+    fillOpacity = 0.2
+  ) %>%
+addLegend(
+    position = "bottomleft", 
+    colors = c("red", "blue", "green"),
+    labels = c("January", "July", "November"), 
+    title = "Months"  
+  )
+
+```
+
+
 ### Problem 2: Choropleth Maps
 
 For this problem, I want you to practice creating choropleth maps.  Let's grab some data using `tidycensus`.  Remember that you will have to set up an [API key](https://api.census.gov/data/key_signup.html).
 
-```{r, eval = FALSE}
-api_key <- "insert key"
+```{r, eval = T}
+api_key <- "b3c5304d552e16e473b315db0ad7302455075d08"
 ```
 
 a. Let's grab data on the median gross rent (`B25064_001`) from the American Community Survey for Multnomah county, Oregon.  I want you to do data pulls at three geography resolutions: county subdivision, tract, and block group.
 
+```{r}
+
+v21 <- load_variables(2021, "acs5", cache = TRUE)
+
+count <- get_acs(geography = "county subdivision", 
+              variables = c(gross_rent = "B25064_001"), 
+              year = 2021,
+              state = "OR",
+              county = 'Multnomah County',
+              survey = "acs5",
+              output = "wide",
+              geometry = T)
+
+tract <- get_acs(geography = "tract", 
+              variables = c(gross_rent = "B25064_001"), 
+              year = 2021,
+              state = "OR",
+              county = 'Multnomah County',
+              survey = "acs5",
+              output = "wide",
+              geometry = T)
+
+block <- get_acs(geography = "block group", 
+              variables = c(gross_rent = "B25064_001"), 
+              year = 2021,
+              state = "OR",
+              county = 'Multnomah County',
+              survey = "acs5",
+              output = "wide",
+              geometry = T)
+```
+
+
 b. Create three choropleth maps of gross rent, one for each geography resolution.  What information can we glean from these maps?  Also, which resolution seems most useful for this variable?  Justify your answer.
+
+```{r}
+tm_shape(tract) +
+  tm_polygons(col = "gross_rentE", fill = "gross_rentE", style = "quantile", title = "Median Gross Rent") +
+  tm_layout(main.title = "Median Gross Rent in Multnomah County Tracts, 2018-2022",
+            main.title.position = "center",
+            legend.outside = TRUE,
+            main.title.size = 1)
+
+tm_shape(block) +
+  tm_polygons(col = "gross_rentE", fill = "gross_rentE", style = "quantile", title = "Median Gross Rent") +
+  tm_layout(main.title = "Median Gross Rent in Multnomah County Blocks, 2018-2022",
+            main.title.position = "center",
+            legend.outside = TRUE,
+            main.title.size = 1)
+
+tm_shape(count) +
+  tm_polygons(col = "gross_rentE", fill = "gross_rentE", style = "quantile", title = "Median Gross Rent") +
+  tm_layout(main.title = "Median Gross Rent in Multnomah County Subdivisions, 2018-2022",
+            main.title.position = "center",
+            legend.outside = TRUE,
+            main.title.size = 1)
+```
+
