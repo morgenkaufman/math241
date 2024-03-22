@@ -27,6 +27,7 @@ library(tidyverse)
 library(tidytext)
 library(knitr)
 library(janeaustenr) 
+library(dplyr)
 ```
 
 ## Data
@@ -37,6 +38,7 @@ The **janeaustenr** package offers a function, `austen_books()`, that returns a 
 #| label: get-data
 
 # add code here
+austen_books <- austen_books()
 ```
 
 -   **Demo:** Which books are included in the dataset?
@@ -45,6 +47,10 @@ The **janeaustenr** package offers a function, `austen_books()`, that returns a 
 #| label: books
 
 # add code here
+books <- austen_books %>%
+  group_by(book) %>%
+  summarise()
+print(books)
 ```
 
 # Word frequencies
@@ -57,6 +63,8 @@ The **janeaustenr** package offers a function, `austen_books()`, that returns a 
 #| label: words
 
 # add code here
+austen_words <- austen_books %>%
+  unnest_tokens(output = word, input = text)
 ```
 
 -   **Your turn:** Discover the top 10 most commonly used words in each of Jane Austen's books.
@@ -67,6 +75,12 @@ With stop words:
 #| label: top-words
 
 # add code here
+austen_words %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 1000) %>%
+  ggplot(aes(y = fct_reorder(word, n), x = n, fill = n)) +
+  geom_col() +
+  guides(fill = FALSE)
 ```
 
 -   **Demo:** Let's do better, without the "stop words".
@@ -74,7 +88,7 @@ With stop words:
 ```{r}
 #| label: stop-words
 
-stop_words
+data("stop_words")
 ```
 
 Without stop words:
@@ -83,6 +97,15 @@ Without stop words:
 #| label: top-without-stop-words
 
 # add code here
+austen_words_stop <- austen_words %>%
+  anti_join(stop_words)
+
+austen_words_stop %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 500) %>%
+  ggplot(aes(y = word, x = n, fill = n)) +
+  geom_col() +
+  guides(fill = FALSE)
 ```
 
 With better ordering:
@@ -91,6 +114,12 @@ With better ordering:
 #| label: top-without-stop-words-better
 
 # add code here
+austen_words_stop %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 500) %>%
+  ggplot(aes(y = fct_reorder(word, n), x = n, fill = n)) +
+  geom_col() +
+  guides(fill = FALSE)
 ```
 
 # Bigram frequencies
@@ -103,6 +132,8 @@ An n-gram is a contiguous series of $n$ words from a text; e.g., a **bigram** is
 #| label: bigrams
 
 # add code here
+austen_words_stop %>%
+  
 ```
 
 -   **Your turn:** Visualize the frequencies of top 10 bigrams in each of Jane Austen's books.

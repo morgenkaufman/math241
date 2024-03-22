@@ -45,7 +45,11 @@ biketown_data
 ```
 
 b. Create an interactive map of the start point of the rides using the `leaflet` package.  Make sure to include a legend and a title.  What do you notice about the distribution of rides?
-```{r}
+
+NOTE: I am not adding a title, I have tried to figure out how to with Adrien but we decided it is easier to just not include one
+
+
+```{r, eval = FALSE}
 biketown_data %>% 
   leaflet() %>%
   addTiles() %>%
@@ -53,7 +57,7 @@ biketown_data %>%
 ```
 
 
-```{r}
+```{r, eval = FALSE}
 leaflet(data = biketown_data) %>%
   addTiles() %>%
   addCircleMarkers(
@@ -75,7 +79,7 @@ c. Using the `lubridate` package, create a variable, `month`, indicating the mon
 
 Add this variable to your interactive map using color.  Make sure to include a legend and be mindful of your color palette choice.  Do ride locations vary by months of the year?
 
-```{r}
+```{r, eval = FALSE}
 biketown <- biketown_data %>%
   mutate(StartDate = mdy(StartDate),
          EndDate = mdy(EndDate)) %>%
@@ -104,6 +108,7 @@ addLegend(
 
 ```
 
+We can see that the ride locations and ride frequency changed during differnt months. During January which is during winter very few rides can be seen and when they do occur they are closer to the city center. In contrast during July in the summer and Novermber in the fall when the weather is much more plesent, rides seem to be more spread out and occuring in higher numbers.  
 
 ### Problem 2: Choropleth Maps
 
@@ -172,4 +177,7 @@ tm_shape(count) +
             legend.outside = TRUE,
             main.title.size = 1)
 ```
+We can see that the county outskirts average rent is quite high. Additionally a number of tracts within central Portland have very high gross rents as well. The central north area of the county tends to be the least expensive in terms of rent however we are also missing a bit of data from this area and thus results may be skewed.  
 
+
+I think that the graphic divided by tract is the most effective at showing these trends. The county subdivision is also quite useful but it may lack some detail in the center and is mainly useful for a quick/brief analysis. The graphic divided by block is way too crowded and detailed and is very difficult to read. 
