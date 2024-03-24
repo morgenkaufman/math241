@@ -1,6 +1,6 @@
 ---
 title: "Lab 7"
-author: "Insert Name"
+author: "Morgen Kaufman"
 date: "Math 241, Week 9"
 output:
   pdf_document
@@ -10,12 +10,10 @@ urlcolor: blue
 ```{r setup, include=FALSE}
 # Do not modify this chunk.
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
-
-
 ```
 
 ```{r}
-# Put all necessary libraries here
+# Put all necessary libraries herey
 library(tidyverse)
 library(tidytext)
 
@@ -58,7 +56,13 @@ a. For 2000, find the ten most popular female baby names that start with the let
 
 ```{r, eval = FALSE}
 #Hint: Use 
-top_n(___)
+t1 <- babynames %>%
+  filter(year == "2000",
+         sex == "F",
+         str_detect(name, "Z")) %>% 
+  top_n(10)
+
+t1
 ```
 
 
@@ -66,20 +70,49 @@ top_n(___)
 
 b. For 2000, find the ten most popular female baby names that contain the letter z.  
 
+```{r}
+t2 <- babynames %>%
+  filter(year == "2000",
+         sex == "F",
+         str_detect(name, "[Zz]")) %>% 
+  top_n(10)
+
+t2
+```
+
 
 
 c. For 2000, find the ten most popular female baby names that end in the letter z. 
+```{r}
+t3 <- babynames %>%
+  filter(year == "2000",
+         sex == "F",
+         str_detect(name, "z$")) %>% 
+  top_n(10)
+
+t3
+```
 
 
 d. Between your three tables in 1.a - 1.c, do any of the names show up on more than one list?  If so, which ones? (Yes, I know you could do this visually but use some joins!)
 
-
-
-
+```{r}
+names_1_2 <- inner_join(t1, t2, by = "name")
+names_1_3 <- inner_join(t1, t3, by = "name")
+names_2_3 <- inner_join(t2, t3, by = "name")
+name_z_all <- bind_rows(names_1_2, names_1_3, names_2_3)
+name_z_all
+```
 
 
 e.  Verify that none of the baby names contain a numeric (0-9) in them.
 
+```{r}
+numeric_names <- babynames %>%
+  filter(str_detect(name, "[0-9]"))
+
+numeric_names
+```
 
 
 f. While none of the names contain 0-9, that doesn't mean they don't contain "one", "two", ..., or "nine".  Create a table that provides the number of times a baby's name contained the word "zero", the word "one", ... the word "nine". 
@@ -93,6 +126,14 @@ Notes:
 *Hint*: You will have two steps that require pattern matching:
     1. Subset your table to only include the rows with the desired words.
     2. Add a column that contains the desired word.  
+
+```{r}
+test <- babynames %>%
+  mutate(name = tolower(name)) %>%
+  str_extract
+```
+
+
 
 
 g. Which written number or numbers don't show up in any of the baby names?
