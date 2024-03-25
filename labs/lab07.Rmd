@@ -128,9 +128,39 @@ Notes:
     2. Add a column that contains the desired word.  
 
 ```{r}
-test <- babynames %>%
-  mutate(name = tolower(name)) %>%
-  str_extract
+numbernames <- babynames %>%
+  mutate(name = tolower(name),
+         zero = str_extract(name, "zero"),
+         one = str_extract(name, "one"),
+         two = str_extract(name, "two"),
+         three = str_extract(name, "three"),
+         four = str_extract(name, "four"),
+         five = str_extract(name, "five"),
+         six = str_extract(name, "six"),
+         seven = str_extract(name, "seven"),
+         eight = str_extract(name, "eight"),
+         nine = str_extract(name, "nine")
+         )
+
+numbernames_sub <- numbernames %>%
+  filter(rowSums(!is.na(select(., zero, one, two, three, four, five, six, seven, eight, nine))) > 0)
+
+numbernames_count <- numbernames_sub %>%
+  summarise(
+    zero = sum(!is.na(zero)),
+    one = sum(!is.na(one)),
+    two = sum(!is.na(two)),
+    three = sum(!is.na(three)),
+    four = sum(!is.na(four)),
+    five = sum(!is.na(five)),
+    six = sum(!is.na(six)),
+    seven = sum(!is.na(seven)),
+    eight = sum(!is.na(eight)),
+    nine = sum(!is.na(nine))
+  )
+
+numbernames_count
+
 ```
 
 
@@ -138,14 +168,37 @@ test <- babynames %>%
 
 g. Which written number or numbers don't show up in any of the baby names?
 
-
+Five does not show up at all.
 
 
 h. Create a table that contains the names and their frequencies for the two least common written numbers.
+```{r}
+least_common_numbers_count <- numbernames %>%
+  filter(rowSums(!is.na(select(., zero, four))) > 0) %>%
+  count(name)
+
+least_common_numbers_count
+
+least_common_numbers <- numbernames %>%
+  filter(rowSums(!is.na(select(., zero, four))) > 0)
+
+least_common_numbers
+```
 
 
 i. List out the names that contain no vowels (consider "y" to be a vowel).  
 
+```{r}
+library(dplyr)
+library(stringr)
+
+# Filter names containing no vowels
+names_no_vowels <- babynames %>%
+  filter(!str_detect(name, "[aeiouyAEIOUY]")) %>% 
+  count(name)
+
+names_no_vowels
+```
 
 ### Problem 2: Tidying the "Call of the Wild"
 
@@ -158,6 +211,9 @@ wild <- gutenberg_download(215)
 
 a.  Create a tidy text dataset where you tokenize by words.
 
+```{r}
+wild %>%
+```
 
 
 b. Find the frequency of the 20 most common words.  First, remove stop words.
