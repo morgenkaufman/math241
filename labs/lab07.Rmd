@@ -54,7 +54,7 @@ data("babynames")
 
 a. For 2000, find the ten most popular female baby names that start with the letter Z.
 
-```{r, eval = FALSE}
+```{r}
 #Hint: Use 
 t1 <- babynames %>%
   filter(year == "2000",
@@ -64,8 +64,6 @@ t1 <- babynames %>%
 
 t1
 ```
-
-
 
 
 b. For 2000, find the ten most popular female baby names that contain the letter z.  
@@ -79,7 +77,6 @@ t2 <- babynames %>%
 
 t2
 ```
-
 
 
 c. For 2000, find the ten most popular female baby names that end in the letter z. 
@@ -164,8 +161,6 @@ numbernames_count
 ```
 
 
-
-
 g. Which written number or numbers don't show up in any of the baby names?
 
 Five does not show up at all.
@@ -200,6 +195,7 @@ names_no_vowels <- babynames %>%
 names_no_vowels
 ```
 
+
 ### Problem 2: Tidying the "Call of the Wild"
 
 Did you read "Call of the Wild" by Jack London?  If not, [read the first paragraph of its wiki page](https://en.wikipedia.org/wiki/The_Call_of_the_Wild) for a quick summary and then let's do some text analysis on this classic!  The following code will pull the book into R using the `gutenbergr` package.  
@@ -212,14 +208,33 @@ wild <- gutenberg_download(215)
 a.  Create a tidy text dataset where you tokenize by words.
 
 ```{r}
-wild %>%
+wild_token <- wild %>%
+  unnest_tokens(output = word, input = text)
 ```
 
 
 b. Find the frequency of the 20 most common words.  First, remove stop words.
 
+```{r}
+wild20 <- wild_token %>%
+  group_by(word) %>%
+  summarise(frequency = n()) %>%
+  arrange(desc(frequency)) %>%
+  top_n(20)
+
+wild20
+```
 
 c. Create a bar graph and a word cloud of the frequencies of the 20 most common words.
+```{r}
+ggplot(data = wild20, aes(x = reorder(word, frequency), y = frequency)) +
+  geom_bar(stat = "identity", fill = "#e0218a") +
+  labs(x = "Word", y = "Frequency") +
+  coord_flip() +
+  ggtitle("Top 20 Most Common Words") +
+  theme_minimal()
+
+```
 
 
 d. Explore the sentiment of the text using three of the sentiment lexicons in `tidytext`. What does your analysis say about the sentiment of the text?
@@ -229,14 +244,95 @@ Notes:
 * Make sure to NOT remove stop words this time.  
 * `afinn` is a numeric score and should be handled differently than the categorical scores.
 
+Afinn
+```{r}
+wild_group <- wild_token %>%
+  group_by(word) %>%
+  summarise(frequency = n())
 
+afinn_wild <- wild_group %>%
+  left_join(get_sentiments("afinn")) %>%
+  filter(!is.na(value)) %>%
+  arrange(desc(value)) %>%
+  group_by(word)
+afinn_wild
+
+afinn_wild %>%
+  group_by(value) %>%
+  summarise(n())
+
+afinn_wild %>%
+  ungroup()%>%
+  summarise(
+    mean = mean(value))
+
+```
+
+Bing
+```{r}
+
+bing_wild <- wild_token %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+bing_wild
+
+bing_wild %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 10) %>% 
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+```
+
+NRC
+```{r}
+nrc_wild <- wild_token %>%
+  inner_join(get_sentiments("nrc")) %>%
+  count(word, sentiment) %>%
+  ungroup()
+nrc_wild
+
+nrc_wild %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 10) %>% 
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+```
 
 e. If you didn't do so in 2.d, compute the average sentiment score of the text using `afinn`.  Which positive words had the biggest impact? Which negative words had the biggest impact?
+```{r}
+wild_token %>%
+  group_by(word) %>%
+  summarise(frequency = n()) %>%
+  left_join(get_sentiments("afinn")) %>%
+  filter(!is.na(value)) %>%
+  arrange(desc(frequency)) %>%
+  top_n(5, wt = frequency)
+```
 
+Top Positive:like, great, good
+
+Top Negative: no, fire
 
 
 f. You should have found that "no" was an important negative word in the sentiment score.  To know if that really makes sense, let's turn to the raw lines of text for context.  Pull out all of the lines that have the word "no" in them.  Make sure to not pull out extraneous lines (e.g., a line with the word "now").  
 
+```{r}
+
+nowild <- wild %>%
+  filter(str_detect(text, "\\bno\\b"))
+print(nowild)
+```
 
 g. Draw some conclusions about how "no" is used in the text.
 
@@ -253,6 +349,13 @@ h. We can also look at how the sentiment of the text changes as the text progres
 ```{r}
 wild_time <- wild %>%
   mutate(line = row_number(), index = floor(line/45) + 1) 
+
+test <- wild_time %>%
+  unnest_tokens(output = word, input = text)
+
+test1 <- test %>%
+  inner_join(get_sentiments("bing"))
+test1
 ```
 
 ```{r, eval = FALSE}
