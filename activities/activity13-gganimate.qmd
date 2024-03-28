@@ -40,7 +40,7 @@ Freedom House has analyzed challenges to freedom and advocated for greater polit
 #| warning: false
 #| out-width: "80%"
 
-freedom <- read_csv(here::here("freedom.csv"), na = "-")
+freedom <- read_csv(here::here("math241/activities/freedom.csv"), na = "-")
 
 freedom_ranked <- freedom %>%
   select(country, contains("cl_")) %>%
@@ -65,13 +65,20 @@ freedom_ranked <- freedom %>%
 #| label: simple-line-plot
 #| eval: false
 
-freedom_ranked %>%
-  filter() %>% 
-  ggplot()
-
+freedom_iran <- freedom_ranked %>%
+  filter(country == "Iran") %>% 
+  ggplot(aes(x = year, y = civil_liberty)) +
+  geom_line()
+freedom_iran
 ```
 
 -   **Demo:** Build on your previous plot to create an interactive version of the figure. Hint: use `transition_reveal()`
+
+```{r}
+freedom_iran +
+  transition_reveal(year) 
+  
+```
 
 # Visualizing multiple countries at once!
 
@@ -95,7 +102,7 @@ freedom_to_plot <- freedom %>%
   filter(country %in% countries_to_plot) %>%
   drop_na()
 
-freedom_ranked <- freedom %>%
+freedom_ranked <- freedom_to_plot %>%
   select(country, contains("cl_")) %>%
   pivot_longer(
     cols = -country,
@@ -117,14 +124,19 @@ freedom_ranked <- freedom %>%
 #| eval: false
 
 # add code here
-
-# hint: to label each bar with country name, you can use 
-
+freedom_ranked %>%
+  ggplot(
+    aes(
+      x = year, 
+      y = rank_in_year,
+      fill = country
+    )
+  ) +
+  geom_bar(stat = "identity", width = 3) +
 geom_text(
   hjust = "right", 
   aes(label = country), 
   x = -1)
-
 ```
 
 ## Interactive figure
@@ -142,12 +154,23 @@ geom_text(
 # add code here
 
 # hint: label each year with   
-
+plot <- freedom_ranked %>%
+  ggplot(
+    aes(
+      x = year, 
+      y = rank_in_year,
+      fill = country
+    )
+  ) +
+  geom_bar(stat = "identity", width = 3) +
 geom_text(
-    x = 5, y = 1,
-    hjust = "left",
-    aes(label = as.character(year)),
-    size = 10
-  )
+  hjust = "right", 
+  aes(label = country), 
+  x = -1) +
+  transition_states(country)
+
+
+  animate(plot, fps = 5)
+  
 
 ```
