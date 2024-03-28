@@ -350,32 +350,68 @@ h. We can also look at how the sentiment of the text changes as the text progres
 wild_time <- wild %>%
   mutate(line = row_number(), index = floor(line/45) + 1) 
 
-test <- wild_time %>%
+wild_token <- wild_time %>%
   unnest_tokens(output = word, input = text)
 
-test1 <- test %>%
+wild_sent <- wild_token %>%
   inner_join(get_sentiments("bing"))
-test1
+wild_sent
+
+wild_score <- wild_sent %>% 
+  group_by(index) %>%
+  summarise(count = n(), total_pos = sum(sentiment == "positive"), total_neg = sum(sentiment == "negative")) %>%
+  mutate(score = total_pos - total_neg)
+
 ```
-
-```{r, eval = FALSE}
-#Hint: fill = 0 will insert zero instead of NA
-pivot_XXX(..., values_fill = 0)
-```
-
-
 
 
 i. Create a plot of the sentiment scores as the text progresses.
 
+```{r}
+wild_score %>%
+  ggplot(aes(x = index, y = score)) +
+  geom_line() +
+  geom_smooth()
+```
 
 
 
 j. The choice of 45 lines per chunk was pretty arbitrary.  Try modifying the index value a few times and recreating the plot in i.  Based on your plots, what can you conclude about the sentiment of the novel as it progresses?
 
+```{r}
+
+wild_time <- wild %>%
+  mutate(line = row_number(), index = floor(line/10) + 1) 
+
+wild_token <- wild_time %>%
+  unnest_tokens(output = word, input = text)
+
+wild_sent <- wild_token %>%
+  inner_join(get_sentiments("bing"))
+wild_sent
+
+wild_score <- wild_sent %>% 
+  group_by(index) %>%
+  summarise(count = n(), total_pos = sum(sentiment == "positive"), total_neg = sum(sentiment == "negative")) %>%
+  mutate(score = total_pos - total_neg)
+
+wild_score %>%
+  ggplot(aes(x = index, y = score)) +
+  geom_line() +
+  geom_smooth()
+```
+
 
 k. Let's look at the bigrams (2 consecutive words).  Tokenize the text by bigrams.  
 
+```{r}
+wild_time <- wild %>%
+  mutate(line = row_number(), index = floor(line/45) + 1) 
+
+wild_token <- wild_time %>%
+  unnest_tokens(output = word, input = text)
+
+```
 
 
 l.  Produce a sorted table that counts the frequency of each bigram and notice that stop words are still an issue.
