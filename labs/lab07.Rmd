@@ -27,6 +27,10 @@ library(textdata)
 # Before knitting your document one last time, you will have to download the AFINN lexicon explicitly
 lexicon_afinn()
 lexicon_nrc()
+
+
+library(dplyr)
+library(stringr)
 ```
 
 
@@ -184,9 +188,6 @@ least_common_numbers
 i. List out the names that contain no vowels (consider "y" to be a vowel).  
 
 ```{r}
-library(dplyr)
-library(stringr)
-
 # Filter names containing no vowels
 names_no_vowels <- babynames %>%
   filter(!str_detect(name, "[aeiouyAEIOUY]")) %>% 
@@ -216,7 +217,10 @@ wild_token <- wild %>%
 b. Find the frequency of the 20 most common words.  First, remove stop words.
 
 ```{r}
+data("stop_words")
+
 wild20 <- wild_token %>%
+  anti_join(stop_words) %>%
   group_by(word) %>%
   summarise(frequency = n()) %>%
   arrange(desc(frequency)) %>%
@@ -227,6 +231,8 @@ wild20
 
 c. Create a bar graph and a word cloud of the frequencies of the 20 most common words.
 ```{r}
+library(wordcloud)
+
 ggplot(data = wild20, aes(x = reorder(word, frequency), y = frequency)) +
   geom_bar(stat = "identity", fill = "#e0218a") +
   labs(x = "Word", y = "Frequency") +
@@ -234,6 +240,12 @@ ggplot(data = wild20, aes(x = reorder(word, frequency), y = frequency)) +
   ggtitle("Top 20 Most Common Words") +
   theme_minimal()
 
+wordcloud(words = wild20$word, 
+          freq = wild20$frequency,
+          scale = c(4, 1),
+          rot.per = .5,
+          colors = "#e0218a",
+          random.order = FALSE)
 ```
 
 
@@ -309,6 +321,8 @@ nrc_wild %>%
        y = NULL)
 ```
 
+The general sentiument seems to be quite neutral. While there looks like a slight negative skew with afinn and a slight positive skew with bing in general the sentiment is relatively neutral with a good balance of negative and positive words. 
+
 e. If you didn't do so in 2.d, compute the average sentiment score of the text using `afinn`.  Which positive words had the biggest impact? Which negative words had the biggest impact?
 ```{r}
 wild_token %>%
@@ -336,6 +350,7 @@ print(nowild)
 
 g. Draw some conclusions about how "no" is used in the text.
 
+No within this text seems to be used as a modifier for adjectives and verbs. In some cases when it occurs while it does  have a slight negative connotation in others it is actullt positibe such as "no more trouble" and "no matter what the odds." As such it seems that no while greatkly contributing to the calculated sentiment is quite nuetral in most cases and works purley as a modifier. 
 
 h. We can also look at how the sentiment of the text changes as the text progresses.  Below, I have added two columns to the original dataset. Now I want you to do the following wrangling:
 
@@ -402,18 +417,25 @@ wild_score %>%
 ```
 
 
+Throughout the novel there is a constant and drastic shift from positive to negaiuve in scores. However, in the case of negative, the lowest score is much more than the highest positive score. Additionally while there are near constant fluctuations, when plotted and averagered out the score is fairly nuetral. 
+
 k. Let's look at the bigrams (2 consecutive words).  Tokenize the text by bigrams.  
 
 ```{r}
-wild_time <- wild %>%
-  mutate(line = row_number(), index = floor(line/45) + 1) 
+wild_bigrams <- wild %>%
+  unnest_tokens(output = bigram, input = text, token = "ngrams", n = 2) %>%
+  na.omit()
 
-wild_token <- wild_time %>%
-  unnest_tokens(output = word, input = text)
-
+wild_bigrams
 ```
 
 
 l.  Produce a sorted table that counts the frequency of each bigram and notice that stop words are still an issue.
 
+```{r}
+wild_bigrams %>%
+  group_by(bigram) %>%
+  summarise(frequency = n()) %>%
+  arrange(desc(frequency))
+```
 

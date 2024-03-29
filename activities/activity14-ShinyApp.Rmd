@@ -52,6 +52,29 @@ ggplot(mapping = aes(x = date, y = births,
                      color = wday)) + 
   geom_point() + 
   theme(legend.position = "bottom")
+
+
+
+
+
+ui <- fluidPage(
+  titlePanel(),
+  sidebarLayout(inputId = "names",
+                label = "Lab",
+                choices = NULL,
+                multiple = TRUE),
+    sidebarPanel(
+    ),
+    mainPanel(
+    )
+  )
+)
+
+# Server function
+server <- function(input, output){}
+
+# Creates app
+shinyApp(ui = ui, server = server)
 ```
 
 
