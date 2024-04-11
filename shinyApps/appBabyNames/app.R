@@ -43,7 +43,6 @@ server <- function(input, output, session){
   updateSelectizeInput(session, 'names', 
                        choices = unique(babynames$name), 
                        server = TRUE)
-  
   dat_names <- reactive({ 
     babynames %>%
       group_by(year, name) %>%

@@ -33,23 +33,151 @@ knitr::opts_chunk$set(
 
 The `Whickham` data set in the `mosaicData` package includes data on age, smoking, and mortality from a one-in-six survey of the electoral roll in Whickham, a mixed urban and rural district near Newcastle upon Tyne, in the United Kingdom. The survey was conducted in 1972--1974 to study heart disease and thyroid disease. A follow-up on those in the survey was conducted 20 years later. Describe the association between smoking status and mortality in this study. Be sure to consider the role of age as a possible confounding factor.
 
+```{r}
+data(Whickham)
+
+Whickham %>%
+  group_by(smoker) %>%
+  count(outcome)
+
+Whickham %>%
+  group_by(smoker, outcome) %>%
+  summarise(count = n()) %>%
+  ggplot(aes(x = smoker, y = count, fill = outcome)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Smoking Status", y = "Count", fill = "Outcome")
+
+Whickham %>%
+  ggplot(aes(x = age, fill = outcome)) +
+  geom_bar(width = 10) +
+  facet_wrap(~ smoker) +
+  labs(x = "Age", y = "Count", color = "Outcome", title = "Age Distribution For Smokers and Non-Smokers")
+```
+
+non = 732
+
+31% passed
+
+smokers = 582
+
+23%
+
+This data
+
 ## Exercise 2:
 
 a)  Calculate the mean age of birthing people from the `Gestation` data set from the `mosaicData` package.
 
 ```{r}
+gestation <- Gestation 
+
+gestation %>% 
+  summarise(mean_age = mean(age, na.rm = TRUE)) 
 ```
 
 b)  Use the bootstrap to generate and interpret a 95% confidence interval for the mean age of birthing people.
 
 ```{r}
+set.seed(1)
 
+gestation_boot <- gestation %>% 
+  rep_sample_n(size = nrow(gestation), replace = TRUE, reps = 1000) %>%
+  group_by(replicate) %>%
+  summarize(mean_age = mean(age, na.rm=T)) 
+
+gestation_boot %>%
+  slice_head(n = 10)
+
+stats <- gestation_boot %>%
+  summarize(avg_age = mean(mean_age),
+            std_err_age = sd(mean_age))
+stats
+
+ci <- gestation_boot %>%
+  summarize(
+    lower_bound = quantile(mean_age, probs = c(.025)),
+    upper_bound = quantile(mean_age, probs = c(.975))
+  )
+ci
+
+ggplot(data=gestation_boot, aes(x=mean_age)) + 
+  geom_histogram() +
+  geom_vline(xintercept = ci$lower_bound, color = 'blue') +
+   geom_vline(xintercept = ci$upper_bound, color = 'blue') +
+  labs(x = "Mean Birthing Age", y = "Frequency", title = "Bootstrap Mean Birthing Age with 95% CI")
 ```
+
+Interpretation:
+
+We are 95% confident that the true mean age of birthing people is between 26.9554 and 27.57333 years (or 26.96 and 27.57 if we were to round)
 
 ## Exercise 3:
 
 Using data from the `palmerpenguins` package, create a Shiny app that displays measurements from the penguins dataframe. Allow the user to select a species or a gender, and to choose between various attributes on a scatterplot. (Hint: examples of similar apps can be found at the Shiny gallery).
 
 ```{r}
+library(shiny)
+library(ggplot2)
+library(dplyr)
+library(palmerpenguins)
+library(DT)
 
+
+ui <- fluidPage(
+  titlePanel("Penguins!"),
+  sidebarLayout(
+    sidebarPanel(
+      
+      selectInput(inputId = "species",
+                  label = "Select Species",
+                  choices = unique(penguins$species)),
+      
+      selectInput(inputId = "gender",
+                  label = "Select Gender",
+                  choices = c("Male" = "male", 
+                              "Female" = "female")),
+      
+      selectInput(inputId = "attribute",
+                  label = "Select Attribute",
+                  choices = c("Bill Length (mm)" = "bill_length_mm", 
+                              "Bill Depth (mm)" = "bill_depth_mm", 
+                              "Flipper Length (mm)" = "flipper_length_mm",
+                              "Body Mass (grams)"= "body_mass_g"))
+      
+    ),
+    
+    mainPanel(
+      plotOutput(outputId = "scatterplot"),
+      DTOutput("datatable")
+    )
+  )
+)
+
+
+server <- function(input, output, session) {
+  
+  filtered_penguin <- reactive({ 
+    penguins %>%
+      filter(species == input$species & sex == input$gender)
+  })
+  
+  output$scatterplot <- renderPlot({
+    ggplot(data = filtered_penguin(), 
+           mapping = aes_string(x = input$attribute, color = "island")) +
+      geom_point(stat = "count", aes(y = ..count..), size = 3, alpha = 0.8) +
+      labs(x = ifelse(input$attribute == "bill_length_mm", "Bill Length (mm)",
+          ifelse(input$attribute == "bill_depth_mm", "Bill Depth (mm)",
+          ifelse(input$attribute == "flipper_length_mm", "Flipper Length (mm)",
+          ifelse(input$attribute == "body_mass_g", "Body Mass (grams)", input$attribute)))), 
+        y = "Count")
+  })
+
+  output$datatable <- renderDT({
+    filtered_penguin()
+  })
+}
+
+shinyApp(ui = ui, server = server)
 ```
+
+\

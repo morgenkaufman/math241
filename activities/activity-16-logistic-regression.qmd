@@ -37,6 +37,15 @@ Let's start by taking a look at our data. Create a density plot to investigate t
 
 ```{r}
 # add code here
+
+email %>%
+ggplot(aes(x= exclaim_mess)) +
+  facet_wrap(c("spam"))+
+  geom_density()
+
+email %>%
+  group_by(spam) %>%
+  summarise(mean = mean(exclaim_mess))
 ```
 
 -   Would you expect longer or shorter emails to be spam? Create a density plot to investigate the relationship between `spam` and `mean_num_char`
@@ -51,6 +60,8 @@ Suppose we try using a linear model to describe the relationship between the num
 
 ```{r}
 # add code here
+lmmod <- lm(exclaim_mess ~ spam, data = email)
+broom::tidy(lmmod)
 ```
 
 A visualization of a linear model is below.
@@ -109,6 +120,9 @@ What is the probability the email is spam if it contains 10 exclamation points?
 
 ```{r}
 #| label: pred-log-odds-1
+#| 
+logistic_reg() %>%
+  fit(spam ~ exclaim_mess, data = email)
 
 # add code here
 ```
